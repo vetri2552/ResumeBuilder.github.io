@@ -67,7 +67,7 @@
     .bullets li{margin:2px 0}
     .tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
     .tag{background:#eef2ff; color:#1e3a8a; padding:4px 8px; border-radius:999px; font-size:11px}
-    .two-col{display:grid; grid-template-columns:2.2fr 1fr; gap:18px}
+    .two-col{display:block}
 
     /* JD Analyzer card */
     .card{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:12px; min-width:280px}
@@ -76,9 +76,21 @@
     /* Print */
     @page { size: A4; margin: 0 }
     @media print{
-      body{background:#fff}
+      body{background:#fff; margin:0}
       header, .grid > .panel:first-child, .toolbar{display:none !important}
-      .page{box-shadow:none; width:auto; min-height:auto; padding:12mm}
+      .grid{display:block; margin:0; padding:0}
+      .grid > .panel:last-child{border:0; box-shadow:none; padding:0; margin:0}
+      .preview-wrap{display:block; margin:0; padding:0}
+      .resume{border:0; border-radius:0; box-shadow:none; margin:0; padding:0}
+      .page{
+        box-shadow:none;
+        border:0;
+        border-radius:0;
+        width:210mm;
+        min-height:297mm;
+        margin:0;
+        padding:0;
+      }
     }
   </style>
 </head>
