@@ -52,7 +52,7 @@
     /* Right panel (preview) */
     .preview-wrap{display:flex; gap:16px; align-items:flex-start}
     .resume{flex:1; background:#fff; color:#0f172a; border-radius:14px; overflow:hidden; box-shadow:0 8px 28px rgba(0,0,0,.35)}
-    .page{width:210mm; min-height:297mm; margin:0 auto; background:#fff; padding:20mm; position:relative}
+    .page{width:210mm; min-height:297mm; margin:0 auto; background:#fff; padding:14mm 15mm; position:relative; box-sizing:border-box}
     @media (max-width:900px){ .page{width:100%; min-height:auto} }
 
     /* Themes */
@@ -68,13 +68,22 @@
     .tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
     .tag{background:#eef2ff; color:#1e3a8a; padding:4px 8px; border-radius:999px; font-size:11px}
     .two-col{display:block}
+    .two-col > div + div{margin-top:0}
+    #pv-contact:empty{display:none}
+    #pv-summary:empty{display:none}
+    #pv-exp > div, #pv-edu > div, #pv-proj > div{margin-bottom:8px}
+    #pv-proj a{word-break:break-word}
+    .sec-title{break-after:avoid; page-break-after:avoid}
 
     /* JD Analyzer card */
     .card{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:12px; min-width:280px}
     .score{font-size:28px; font-weight:900}
 
     /* Print */
-    @page { size: A4; margin: 12mm; }
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
 
     @media print{
       html, body{
@@ -105,8 +114,8 @@
 
       .resume{
         display:block !important;
-        width:100% !important;
-        margin:0 !important;
+        width:210mm !important;
+        margin:0 auto !important;
         padding:0 !important;
         border:0 !important;
         border-radius:0 !important;
@@ -116,28 +125,43 @@
       }
 
       .page{
-        width:100% !important;
-        min-height:0 !important;
+        width:210mm !important;
+        min-height:297mm !important;
+        height:297mm !important;
         margin:0 !important;
-        padding:0 !important;
+        padding:14mm 15mm !important;
         border:0 !important;
         border-radius:0 !important;
         box-shadow:none !important;
         background:#fff !important;
         position:relative;
+        box-sizing:border-box !important;
       }
 
+      /* Keep every resume section vertically stacked and readable. */
       .two-col{
         display:block !important;
       }
 
+      .two-col > div{
+        width:100% !important;
+      }
+
       .sec-title{
         break-after:avoid;
+        page-break-after:avoid;
       }
 
       .page > *,
       .page .two-col > div > *{
         break-inside:avoid;
+        page-break-inside:avoid;
+      }
+
+      /* Never print editor-only placeholder text or UI controls. */
+      a{
+        color:inherit !important;
+        text-decoration:none !important;
       }
     }
     </style>
@@ -279,7 +303,7 @@
           <div class="page">
             <div class="name" id="pv-name">Your Name</div>
             <div class="muted" id="pv-role">Role</div>
-            <div class="muted" id="pv-contact">City • email@example.com • +91 99999 99999 • link</div>
+            <div class="muted" id="pv-contact"></div>
 
             <h3 class="sec-title">Summary</h3>
             <div id="pv-summary" class="muted">Write a compelling 2–3 line summary that shows impact and focus.</div>
@@ -349,8 +373,9 @@
     <div class="section">
       <div class="row">
         <label>Project Name<input placeholder="E‑commerce App" class="pr-name"></label>
-        <label>Link<input placeholder="https://github.com/you/project" class="pr-link">
-<a src="./resume builder.html/">github</a></label>
+        <label>Link
+          <input placeholder="https://github.com/you/project" class="pr-link">
+        </label>
       </div>
       <label>Description
         <textarea class="pr-desc" placeholder="What it does, tech used, impact"></textarea>
