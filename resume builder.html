@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Resume Builder (Single File)</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#111a2c; --ink:#e6eefc; --muted:#a9b7d3; --accent:#7aa2ff; --accent-2:#4ade80; --danger:#ff6b6b;
+      --card:#0f172a; --chip:#17223a; --border:#21314f;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif; background:linear-gradient(180deg,#0b1220 0%, #0e1627 100%); color:var(--ink);
+      display:flex; flex-direction:column;
+    }
+    header{
+      position:sticky; top:0; z-index:10; backdrop-filter:saturate(1.4) blur(8px);
+      background:rgba(11,18,32,.7); border-bottom:1px solid var(--border);
+    }
+    .wrap{max-width:1200px; margin:0 auto; padding:16px}
+    .bar{display:flex; gap:12px; align-items:center; justify-content:space-between}
+    .title{font-weight:800; letter-spacing:.3px}
+    .subtitle{color:var(--muted); font-size:.9rem}
+    .btn{appearance:none; border:1px solid var(--border); background:var(--chip); color:var(--ink); padding:10px 14px; border-radius:14px; cursor:pointer; font-weight:600}
+    .btn:hover{border-color:var(--accent)}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),#8b5cf6); border-color:transparent}
+    .btn.success{background:linear-gradient(90deg,var(--accent-2),#22d3ee); border-color:transparent}
+    .btn.ghost{background:transparent}
+    .btn.danger{background:linear-gradient(90deg,var(--danger),#f59e0b); border-color:transparent}
+    .grid{display:grid; grid-template-columns:360px 1fr; gap:16px}
+    @media (max-width:1000px){ .grid{grid-template-columns:1fr} }
+
+    /* Left panel (editor) */
+    .panel{
+      background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25)
+    }
+    .section{border:1px dashed var(--border); border-radius:16px; padding:14px; margin-bottom:12px; background:linear-gradient(180deg,rgba(23,34,58,.6),rgba(23,34,58,.2))}
+    .section h3{margin:0 0 8px 0; font-size:1rem; color:#c7d7ff}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    .row-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px}
+    label{display:block; font-size:.8rem; color:var(--muted); margin:6px 0 6px}
+    input, textarea, select{
+      width:100%; background:var(--card); color:var(--ink); border:1px solid var(--border); border-radius:12px; padding:10px 12px; outline:none
+    }
+    textarea{min-height:90px; resize:vertical}
+    .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+    .chip{padding:6px 10px; border-radius:999px; background:var(--chip); border:1px solid var(--border); font-size:.8rem}
+    .chip .x{margin-left:6px; cursor:pointer; opacity:.7}
+
+    /* Right panel (preview) */
+    .preview-wrap{display:flex; gap:16px; align-items:flex-start}
+    .resume{flex:1; background:#fff; color:#0f172a; border-radius:14px; overflow:hidden; box-shadow:0 8px 28px rgba(0,0,0,.35)}
+    .page{width:210mm; min-height:297mm; margin:0 auto; background:#fff; padding:20mm; position:relative}
+    @media (max-width:900px){ .page{width:100%; min-height:auto} }
+
+    /* Themes */
+    .theme-classic .name{font-size:28px; letter-spacing:.3px; font-weight:800}
+    .theme-classic .sec-title{font-weight:800; color:#0f172a; border-bottom:2px solid #e5e7eb; padding-bottom:6px; margin:18px 0 8px}
+    .theme-modern .name{font-size:30px; font-weight:900}
+    .theme-modern .sec-title{font-weight:700; color:#111827; text-transform:uppercase; letter-spacing:1.5px; margin:18px 0 6px}
+    .theme-minimal .name{font-size:26px; font-weight:800}
+    .theme-minimal .sec-title{font-weight:700; color:#111827; margin:14px 0 4px}
+    .muted{color:#374151}
+    .bullets{margin:6px 0 0 18px}
+    .bullets li{margin:2px 0}
+    .tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
+    .tag{background:#eef2ff; color:#1e3a8a; padding:4px 8px; border-radius:999px; font-size:11px}
+    .two-col{display:grid; grid-template-columns:2.2fr 1fr; gap:18px}
+
+    /* JD Analyzer card */
+    .card{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:12px; min-width:280px}
+    .score{font-size:28px; font-weight:900}
+
+    /* Print */
+    @page { size: A4; margin: 0 }
+    @media print{
+      body{background:#fff}
+      header, .grid > .panel:first-child, .toolbar{display:none !important}
+      .page{box-shadow:none; width:auto; min-height:auto; padding:12mm}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap bar">
+      <div>
+        <div class="title">Resume Builder</div>
+        <div class="subtitle">ATS‑friendly, single‑file app. Works offline. Print to PDF.</div>
+      </div>
+      <div class="toolbar" role="group" aria-label="global actions">
+        <button class="btn success" id="btnExample">Load Example</button>
+        <button class="btn" id="btnImport">Import JSON</button>
+        <button class="btn" id="btnExport">Export JSON</button>
+        <button class="btn primary" id="btnPDF">Print / Save PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap grid">
+    <!-- LEFT: Editor -->
+    <section class="panel" aria-label="resume editor">
+      <div class="section">
+        <h3>Template & Appearance</h3>
+        <div class="row">
+          <label>Theme
+            <select id="theme">
+              <option value="theme-classic">Classic</option>
+              <option value="theme-modern">Modern</option>
+              <option value="theme-minimal">Minimal</option>
+            </select>
+          </label>
+          <label>Accent Color
+            <input type="color" id="accentColor" value="#1d4ed8" />
+          </label>
+        </div>
+        <div class="row">
+          <label>Primary Role / Title
+            <input id="role" placeholder="e.g., Full‑Stack Developer" />
+          </label>
+          <label>Location
+            <input id="location" placeholder="City, Country" />
+          </label>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Personal Details</h3>
+        <div class="row">
+          <label>Full Name
+            <input id="name" placeholder="Your name" />
+          </label>
+          <label>Email
+            <input id="email" placeholder="you@email.com" />
+          </label>
+        </div>
+        <div class="row">
+          <label>Phone
+            <input id="phone" placeholder="+91 90000 00000" />
+          </label>
+          <label>Website / LinkedIn
+            <input id="website" placeholder="https://linkedin.com/in/you" />
+          </label>
+        </div>
+        <label>Professional Summary
+          <textarea id="summary" placeholder="2–3 lines that highlight your impact and focus."></textarea>
+        </label>
+      </div>
+
+      <div class="section">
+        <h3>Skills</h3>
+        <div class="row">
+          <label>Add skill
+            <input id="skillInput" placeholder="Type a skill and press Enter" />
+          </label>
+          <div>
+            <label>Category (optional)
+              <select id="skillCategory">
+                <option value="General">General</option>
+                <option value="Frontend">Frontend</option>
+                <option value="Backend">Backend</option>
+                <option value="DevOps">DevOps</option>
+                <option value="Data">Data</option>
+                <option value="Soft">Soft Skills</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="chips" id="skills"></div>
+      </div>
+
+      <div class="section">
+        <h3>Experience</h3>
+        <div id="expList"></div>
+        <button class="btn" id="addExp">+ Add Experience</button>
+      </div>
+
+      <div class="section">
+        <h3>Education</h3>
+        <div id="eduList"></div>
+        <button class="btn" id="addEdu">+ Add Education</button>
+      </div>
+
+      <div class="section">
+        <h3>Projects (optional)</h3>
+        <div id="projList"></div>
+        <button class="btn" id="addProj">+ Add Project</button>
+      </div>
+
+      <div class="section">
+        <h3>Job Description Analyzer</h3>
+        <label>Paste Job Description
+          <textarea id="jd" placeholder="Paste the JD here to extract keywords and estimate ATS match."></textarea>
+        </label>
+        <div class="row">
+          <button class="btn" id="btnAnalyze">Analyze JD</button>
+          <button class="btn ghost" id="btnSuggestBullets">Suggest Bullets</button>
+        </div>
+        <div class="row">
+          <div class="card">
+            <div>Estimated ATS Match</div>
+            <div class="score" id="score">—%</div>
+            <div class="subtitle" id="scoreHint">Paste JD and click Analyze.</div>
+          </div>
+          <div class="card">
+            <div style="font-weight:700; margin-bottom:6px">Top Keywords</div>
+            <div id="keywords" class="chips"></div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT: Preview -->
+    <section class="panel" aria-label="resume preview">
+      <div class="preview-wrap">
+        <div id="resume" class="resume theme-classic" style="--accent:#1d4ed8">
+          <div class="page">
+            <div class="name" id="pv-name">Your Name</div>
+            <div class="muted" id="pv-role">Role</div>
+            <div class="muted" id="pv-contact">City • email@example.com • +91 99999 99999 • link</div>
+
+            <h3 class="sec-title">Summary</h3>
+            <div id="pv-summary" class="muted">Write a compelling 2–3 line summary that shows impact and focus.</div>
+
+            <div class="two-col">
+              <div>
+                <h3 class="sec-title">Experience</h3>
+                <div id="pv-exp"></div>
+
+                <h3 class="sec-title">Projects</h3>
+                <div id="pv-proj"></div>
+              </div>
+              <div>
+                <h3 class="sec-title">Skills</h3>
+                <div id="pv-skills" class="tags"></div>
+
+                <h3 class="sec-title">Education</h3>
+                <div id="pv-edu"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <template id="expItem">
+    <div class="section">
+      <div class="row">
+        <label>Company<input placeholder="Company" class="ex-company"></label>
+        <label>Role / Title<input placeholder="Role" class="ex-role"></label>
+      </div>
+      <div class="row-3">
+        <label>Start<input placeholder="Jan 2023" class="ex-start"></label>
+        <label>End<input placeholder="Present" class="ex-end"></label>
+        <label>Location<input placeholder="City" class="ex-loc"></label>
+      </div>
+      <label>Highlights (one per line)
+        <textarea class="ex-bullets" placeholder="Led X to achieve Y by doing Z"></textarea>
+      </label>
+      <div class="row">
+        <button class="btn ghost del">Remove</button>
+        <button class="btn" data-suggest="role">Suggest for Role</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="eduItem">
+    <div class="section">
+      <div class="row">
+        <label>Institution<input placeholder="University" class="ed-inst"></label>
+        <label>Degree<input placeholder="B.Sc Computer Science" class="ed-deg"></label>
+      </div>
+      <div class="row-3">
+        <label>Start<input placeholder="2019" class="ed-start"></label>
+        <label>End<input placeholder="2023" class="ed-end"></label>
+        <label>Location<input placeholder="City" class="ed-loc"></label>
+      </div>
+      <label>Notes
+        <textarea class="ed-notes" placeholder="GPA 8.6/10, relevant coursework: ..."></textarea>
+      </label>
+      <div class="row"><button class="btn ghost del">Remove</button></div>
+    </div>
+  </template>
+
+  <template id="projItem">
+    <div class="section">
+      <div class="row">
+        <label>Project Name<input placeholder="E‑commerce App" class="pr-name"></label>
+        <label>Link<input placeholder="https://github.com/you/project" class="pr-link">
+<a src="./resume builder.html/">github</a></label>
+      </div>
+      <label>Description
+        <textarea class="pr-desc" placeholder="What it does, tech used, impact"></textarea>
+      </label>
+      <div class="row"><button class="btn ghost del">Remove</button></div>
+    </div>
+  </template>
+
+  <script>
+    // ========= State & Helpers =========
+    const $ = (q, el=document) => el.querySelector(q);
+    const $$ = (q, el=document) => Array.from(el.querySelectorAll(q));
+
+    const state = {
+      theme:'theme-classic',
+      accent:'#1d4ed8',
+      basics:{ name:'', role:'', email:'', phone:'', website:'', location:'', summary:'' },
+      skills:[], // {text, category}
+      experience:[], // {company, role, start, end, loc, bullets:[]}
+      education:[], // {inst, deg, start, end, loc, notes}
+      projects:[], // {name, link, desc}
+      jdText:'',
+    };
+
+    const save = () => localStorage.setItem('resumeBuilderState', JSON.stringify(state));
+    const load = () => { try{ Object.assign(state, JSON.parse(localStorage.getItem('resumeBuilderState'))||{});}catch{}}
+
+    const el = {
+      theme: $('#theme'), accent: $('#accentColor'), role: $('#role'), location: $('#location'),
+      name: $('#name'), email: $('#email'), phone: $('#phone'), website: $('#website'), summary: $('#summary'),
+      skills: $('#skills'), skillInput: $('#skillInput'), skillCategory: $('#skillCategory'),
+      expList: $('#expList'), eduList: $('#eduList'), projList: $('#projList'),
+      jd: $('#jd'), keywords: $('#keywords'), score: $('#score'), scoreHint: $('#scoreHint'),
+      resume: $('#resume'),
+      pv: { name: $('#pv-name'), role: $('#pv-role'), contact: $('#pv-contact'), summary: $('#pv-summary'), skills: $('#pv-skills'), exp: $('#pv-exp'), edu: $('#pv-edu'), proj: $('#pv-proj') }
+    };
+
+    // ========= Renderers =========
+    function renderBasics(){
+      const b = state.basics;
+      el.pv.name.textContent = b.name || 'Your Name';
+      el.pv.role.textContent = b.role || 'Role';
+      const parts = [b.location, b.email, b.phone, b.website].filter(Boolean);
+      el.pv.contact.textContent = parts.join(' • ');
+      el.pv.summary.textContent = b.summary || 'Write a compelling 2–3 line summary that shows impact and focus.';
+    }
+
+    function renderSkills(){
+      // editor chips
+      el.skills.innerHTML = '';
+      state.skills.forEach((s, i)=>{
+        const c = document.createElement('span'); c.className='chip'; c.textContent = s.text + (s.category?` · ${s.category}`:'');
+        const x = document.createElement('span'); x.textContent='✕'; x.className='x'; x.onclick=()=>{ state.skills.splice(i,1); renderSkills(); renderPreview(); save(); };
+        c.appendChild(x); el.skills.appendChild(c);
+      });
+      // preview tags
+      el.pv.skills.innerHTML='';
+      state.skills.forEach(s=>{
+        const t = document.createElement('span'); t.className='tag'; t.textContent=s.text; el.pv.skills.appendChild(t);
+      });
+    }
+
+    function bulletList(lines){
+      const ul = document.createElement('ul'); ul.className='bullets';
+      lines.filter(Boolean).forEach(l=>{ const li=document.createElement('li'); li.textContent=l; ul.appendChild(li); });
+      return ul;
+    }
+
+    function renderExperience(){
+      // Editor
+      el.expList.innerHTML='';
+      state.experience.forEach((ex, idx)=>{
+        const t = document.importNode($('#expItem').content,true);
+        const root = t.querySelector('.section');
+        root.querySelector('.ex-company').value = ex.company||'';
+        root.querySelector('.ex-role').value = ex.role||'';
+        root.querySelector('.ex-start').value = ex.start||'';
+        root.querySelector('.ex-end').value = ex.end||'';
+        root.querySelector('.ex-loc').value = ex.loc||'';
+        root.querySelector('.ex-bullets').value = (ex.bullets||[]).join('\n');
+        root.querySelector('.del').onclick = ()=>{ state.experience.splice(idx,1); renderExperience(); renderPreview(); save(); };
+        root.querySelector('[data-suggest="role"]').onclick = ()=>{
+          const sugg = suggestBullets(ex.role || state.basics.role || 'Professional');
+          const exists = (root.querySelector('.ex-bullets').value||'').trim();
+          root.querySelector('.ex-bullets').value = (exists? exists+'\n':'') + sugg.join('\n');
+          root.querySelector('.ex-bullets').dispatchEvent(new Event('input'));
+        };
+        // Bind inputs
+        root.addEventListener('input', (e)=>{
+          ex.company = root.querySelector('.ex-company').value;
+          ex.role = root.querySelector('.ex-role').value;
+          ex.start = root.querySelector('.ex-start').value;
+          ex.end = root.querySelector('.ex-end').value;
+          ex.loc = root.querySelector('.ex-loc').value;
+          ex.bullets = root.querySelector('.ex-bullets').value.split(/\n+/).map(s=>s.trim()).filter(Boolean);
+          renderPreview(); save();
+        });
+        el.expList.appendChild(t);
+      });
+      // Preview
+      el.pv.exp.innerHTML='';
+      state.experience.forEach(ex=>{
+        const c = document.createElement('div');
+        c.innerHTML = `<div style="display:flex; justify-content:space-between; font-weight:700">`+
+          `<span>${esc(ex.role||'Role')} • ${esc(ex.company||'Company')}</span>`+
+          `<span class="muted">${esc(ex.start||'Start')} – ${esc(ex.end||'Present')} · ${esc(ex.loc||'')}</span>`+
+          `</div>`;
+        c.appendChild(bulletList(ex.bullets||[]));
+        el.pv.exp.appendChild(c);
+      });
+    }
+
+    function renderEducation(){
+      el.eduList.innerHTML='';
+      state.education.forEach((ed, idx)=>{
+        const t = document.importNode($('#eduItem').content,true);
+        const root = t.querySelector('.section');
+        root.querySelector('.ed-inst').value = ed.inst||'';
+        root.querySelector('.ed-deg').value = ed.deg||'';
+        root.querySelector('.ed-start').value = ed.start||'';
+        root.querySelector('.ed-end').value = ed.end||'';
+        root.querySelector('.ed-loc').value = ed.loc||'';
+        root.querySelector('.ed-notes').value = ed.notes||'';
+        root.querySelector('.del').onclick = ()=>{ state.education.splice(idx,1); renderEducation(); renderPreview(); save(); };
+        root.addEventListener('input', ()=>{
+          ed.inst = root.querySelector('.ed-inst').value;
+          ed.deg = root.querySelector('.ed-deg').value;
+          ed.start = root.querySelector('.ed-start').value;
+          ed.end = root.querySelector('.ed-end').value;
+          ed.loc = root.querySelector('.ed-loc').value;
+          ed.notes = root.querySelector('.ed-notes').value;
+          renderPreview(); save();
+        });
+        el.eduList.appendChild(t);
+      });
+      el.pv.edu.innerHTML='';
+      state.education.forEach(ed=>{
+        const c = document.createElement('div');
+        c.innerHTML = `<div style="display:flex; justify-content:space-between; font-weight:700">`+
+          `<span>${esc(ed.deg||'Degree')} • ${esc(ed.inst||'Institution')}</span>`+
+          `<span class="muted">${esc(ed.start||'')} – ${esc(ed.end||'')} · ${esc(ed.loc||'')}</span>`+
+          `</div>`+
+          `<div class="muted">${esc(ed.notes||'')}</div>`;
+        el.pv.edu.appendChild(c);
+      });
+    }
+
+    function renderProjects(){
+      el.projList.innerHTML='';
+      state.projects.forEach((pr, idx)=>{
+        const t = document.importNode($('#projItem').content,true);
+        const root = t.querySelector('.section');
+        root.querySelector('.pr-name').value = pr.name||'';
+        root.querySelector('.pr-link').value = pr.link||'';
+        root.querySelector('.pr-desc').value = pr.desc||'';
+        root.querySelector('.del').onclick = ()=>{ state.projects.splice(idx,1); renderProjects(); renderPreview(); save(); };
+        root.addEventListener('input', ()=>{
+          pr.name = root.querySelector('.pr-name').value;
+          pr.link = root.querySelector('.pr-link').value;
+          pr.desc = root.querySelector('.pr-desc').value;
+          renderPreview(); save();
+        });
+        el.projList.appendChild(t);
+      });
+      el.pv.proj.innerHTML='';
+      state.projects.forEach(pr=>{
+        const c = document.createElement('div');
+        const link = pr.link?`<a href="${esc(pr.link)}" target="_blank" rel="noopener">${esc(pr.link)}</a>`:'';
+        c.innerHTML = `<div style="font-weight:700">${esc(pr.name||'Project')}</div>`+
+                      `<div class="muted">${link}</div>`+
+                      `<div>${esc(pr.desc||'')}</div>`;
+        el.pv.proj.appendChild(c);
+      });
+    }
+
+    function renderTheme(){
+      el.resume.className = 'resume ' + state.theme; // replace
+      el.resume.style.setProperty('--accent', state.accent);
+    }
+
+    function renderPreview(){
+      renderBasics(); renderSkills(); renderExperience(); renderEducation(); renderProjects(); renderTheme();
+    }
+
+    function esc(s){ return (s||'').replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])) }
+
+    // ========= JD Analyzer (rule‑based) =========
+    function extractKeywords(text){
+      const stop = new Set('a,an,the,of,to,and,or,in,on,for,with,by,at,from,as,is,are,be,this,that,these,those,will,shall,can,able,you,our,we,they,their,his,her,its,into,over,under,more,most,least,not,than,per,via,across,using,including'.split(','));
+      const words = (text||'').toLowerCase().match(/[a-zA-Z+#.\-]{2,}/g)||[];
+      const counts = {};
+      for(const w of words){ if(stop.has(w)) continue; counts[w]=(counts[w]||0)+1 }
+      const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+      return entries.slice(0,20).map(([k,v])=>k);
+    }
+
+    function estimateMatch(){
+      const jd = (state.jdText||'').toLowerCase();
+      if(!jd.trim()) return {score:0, matched:[]};
+      const ks = extractKeywords(jd);
+      const my = new Set(state.skills.map(s=>s.text.toLowerCase()));
+      const role = (state.basics.role||'').toLowerCase();
+      const matched = ks.filter(k=> my.has(k) || role.includes(k));
+      const score = Math.round((matched.length / Math.max(ks.length,1)) * 100);
+      return {score, matched, all:ks};
+    }
+
+    function renderJDResults(){
+      const {score, matched, all} = estimateMatch();
+      el.score.textContent = score + '%';
+      el.scoreHint.textContent = matched.length?`Matched ${matched.length} of ${all.length} top keywords.`:'No keywords matched yet.';
+      el.keywords.innerHTML='';
+      all.forEach(k=>{
+        const span = document.createElement('span'); span.className='chip'; span.textContent=k; if(matched.includes(k)) span.style.borderColor='var(--accent-2)';
+        span.onclick=()=>{ // quick add to skills
+          if(!state.skills.find(s=>s.text.toLowerCase()===k)){
+            state.skills.push({text:k, category:'General'}); save(); renderSkills();
+          }
+        };
+        el.keywords.appendChild(span);
+      });
+    }
+
+    // ========= Bullet Suggestions (templates) =========
+    function suggestBullets(role){
+      role = (role||'').toLowerCase();
+      const generic = [
+        'Delivered [impact] by [action], resulting in [metric]% improvement.',
+        'Automated [process] using [tech], saving [hours]/week.',
+        'Collaborated with [team] to ship [feature] to [users] within [timeframe].',
+        'Reduced costs by [metric]% through [initiative].',
+      ];
+      if(role.includes('front')||role.includes('ui')) return [
+        'Built responsive UI with HTML, CSS, and JavaScript improving Core Web Vitals by [metric]%.',
+        'Implemented component library and design tokens, reducing UI bugs by [metric]%.',
+        'Optimized bundle size and lazy loading, cutting TTI by [metric]%.',
+      ];
+      if(role.includes('back')||role.includes('api')) return [
+        'Designed RESTful APIs and data models, increasing throughput by [metric]%.',
+        'Introduced caching and async processing, reducing P99 latency to [value]ms.',
+        'Hardened auth/authorization and added observability, decreasing incidents by [metric]%.',
+      ];
+      if(role.includes('data')||role.includes('ml')||role.includes('ai')) return [
+        'Built data pipelines and feature stores powering ML models with [metric]% accuracy.',
+        'Created dashboards and alerts enabling data‑driven decisions for [team].',
+        'Optimized model inference with batching/quantization, cutting cost by [metric]%.',
+      ];
+      return generic;
+    }
+
+    // ========= Wire up =========
+    function bind(){
+      // theme
+      el.theme.oninput = ()=>{ state.theme = el.theme.value; renderTheme(); save(); };
+      el.accent.oninput = ()=>{ state.accent = el.accent.value; renderTheme(); save(); };
+
+      // basics
+      el.role.oninput = ()=>{ state.basics.role = el.role.value; renderPreview(); save(); };
+      el.location.oninput = ()=>{ state.basics.location = el.location.value; renderPreview(); save(); };
+      el.name.oninput = ()=>{ state.basics.name = el.name.value; renderPreview(); save(); };
+      el.email.oninput = ()=>{ state.basics.email = el.email.value; renderPreview(); save(); };
+      el.phone.oninput = ()=>{ state.basics.phone = el.phone.value; renderPreview(); save(); };
+      el.website.oninput = ()=>{ state.basics.website = el.website.value; renderPreview(); save(); };
+      el.summary.oninput = ()=>{ state.basics.summary = el.summary.value; renderPreview(); save(); };
+
+      // skills
+      el.skillInput.addEventListener('keydown', e=>{
+        if(e.key==='Enter'){
+          e.preventDefault(); const val = el.skillInput.value.trim(); if(!val) return;
+          state.skills.push({text:val, category:el.skillCategory.value}); el.skillInput.value=''; renderSkills(); renderPreview(); save();
+        }
+      });
+
+      // adders
+      $('#addExp').onclick = ()=>{ state.experience.push({bullets:[]}); renderExperience(); renderPreview(); save(); };
+      $('#addEdu').onclick = ()=>{ state.education.push({}); renderEducation(); renderPreview(); save(); };
+      $('#addProj').onclick = ()=>{ state.projects.push({}); renderProjects(); renderPreview(); save(); };
+
+      // JD
+      el.jd.oninput = ()=>{ state.jdText = el.jd.value; save(); };
+      $('#btnAnalyze').onclick = ()=>{ renderJDResults(); };
+      $('#btnSuggestBullets').onclick = ()=>{
+        const sugg = suggestBullets(state.basics.role || 'Professional');
+        if(state.experience.length===0){ state.experience.push({bullets:[]}); }
+        const last = state.experience[state.experience.length-1];
+        last.bullets = (last.bullets||[]).concat(sugg);
+        renderExperience(); renderPreview(); save();
+      };
+
+      // IO
+      $('#btnPDF').onclick = ()=>{ window.print(); };
+      $('#btnExport').onclick = ()=>{
+        const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href=url; a.download='resume.json'; a.click(); URL.revokeObjectURL(url);
+      };
+      $('#btnImport').onclick = ()=>{
+        const inp = document.createElement('input'); inp.type='file'; inp.accept='application/json';
+        inp.onchange = ()=>{
+          const f = inp.files[0]; if(!f) return; const r = new FileReader(); r.onload = ()=>{ try{ Object.assign(state, JSON.parse(r.result)); hydrate(); save(); }catch(e){ alert('Invalid JSON'); } }; r.readAsText(f);
+        }; inp.click();
+      };
+      $('#btnExample').onclick = ()=>{ loadExample(); };
+    }
+
+    function hydrate(){
+      // Basics
+      el.theme.value = state.theme || 'theme-classic';
+      el.accent.value = state.accent || '#1d4ed8';
+      el.role.value = state.basics.role||''; el.location.value = state.basics.location||'';
+      el.name.value = state.basics.name||''; el.email.value = state.basics.email||''; el.phone.value = state.basics.phone||''; el.website.value = state.basics.website||'';
+      el.summary.value = state.basics.summary||'';
+      // Lists
+      renderExperience(); renderEducation(); renderProjects(); renderSkills(); renderPreview();
+    }
+
+    function loadExample(){
+      Object.assign(state, {
+        theme:'theme-modern', accent:'#4f46e5',
+        basics:{
+          name:'Vetrivel P', role:'Full‑Stack Developer', email:'vel75011@gmail.com', phone:'+91 95665 59910', website:'linkedin.com/in/vetrivel-p-2b40b227a', location:'Chennai, IN',
+          summary:'Full‑stack developer skilled in Java, Python, and modern web tooling. Built responsive, accessible interfaces and robust APIs. Passionate about shipping user‑centric features and measurable impact.'
+        },
+        skills:[
+          {text:'Java',category:'Backend'}, {text:'Spring Boot',category:'Backend'}, {text:'Python',category:'Backend'}, {text:'HTML',category:'Frontend'}, {text:'CSS',category:'Frontend'}, {text:'JavaScript',category:'Frontend'}, {text:'React',category:'Frontend'}, {text:'MySQL',category:'Data'}, {text:'Git',category:'General'}
+        ],
+        experience:[
+          {company:'Cognizant', role:'Web Developer Intern', start:'Jan 2024', end:'Jun 2024', loc:'Chennai', bullets:[
+            'Built responsive UI components and forms, improving task completion by 18%.',
+            'Optimized page load with code‑splitting, reducing TTI by 32%.',
+            'Wrote integration tests and CI checks to stabilize releases.'
+          ]}
+        ],
+        education:[{inst:'Anna University', deg:'B.E. Computer Science', start:'2019', end:'2023', loc:'Chennai', notes:'GPA 8.3/10; Courses: DSA, DBMS, OS'}],
+        projects:[{name:'AI Resume Builder', link:'github.com/you/ai-resume', desc:'Single‑file, ATS‑friendly builder with JD analyzer and PDF export.'}],
+        jdText:'We are hiring a Full‑Stack Developer with Java, Spring Boot, React, REST API, MySQL, Git, CI/CD. Experience with performance optimization, accessibility, and testing is a plus.'
+      });
+      hydrate(); renderJDResults(); save();
+    }
+
+    // ========= Init =========
+    load(); bind(); hydrate(); renderPreview();
+  </script>
+</body>
+</html>
