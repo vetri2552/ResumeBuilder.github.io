@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Resume Builder (Single File)</title>
+  <title></title>
   <style>
     :root{
       --bg:#0b1220; --panel:#111a2c; --ink:#e6eefc; --muted:#a9b7d3; --accent:#7aa2ff; --accent-2:#4ade80; --danger:#ff6b6b;
@@ -74,25 +74,73 @@
     .score{font-size:28px; font-weight:900}
 
     /* Print */
-    @page { size: A4; margin: 0 }
+    @page { size: A4; margin: 12mm; }
+
     @media print{
-      body{background:#fff; margin:0}
-      header, .grid > .panel:first-child, .toolbar{display:none !important}
-      .grid{display:block; margin:0; padding:0}
-      .grid > .panel:last-child{border:0; box-shadow:none; padding:0; margin:0}
-      .preview-wrap{display:block; margin:0; padding:0}
-      .resume{border:0; border-radius:0; box-shadow:none; margin:0; padding:0}
+      html, body{
+        background:#fff !important;
+        margin:0 !important;
+        padding:0 !important;
+      }
+
+      header,
+      .grid > .panel:first-child,
+      .toolbar{
+        display:none !important;
+      }
+
+      .wrap,
+      .grid,
+      .grid > .panel:last-child,
+      .preview-wrap{
+        display:block !important;
+        width:100% !important;
+        max-width:none !important;
+        margin:0 !important;
+        padding:0 !important;
+        border:0 !important;
+        box-shadow:none !important;
+        background:#fff !important;
+      }
+
+      .resume{
+        display:block !important;
+        width:100% !important;
+        margin:0 !important;
+        padding:0 !important;
+        border:0 !important;
+        border-radius:0 !important;
+        box-shadow:none !important;
+        overflow:visible !important;
+        background:#fff !important;
+      }
+
       .page{
-        box-shadow:none;
-        border:0;
-        border-radius:0;
-        width:210mm;
-        min-height:297mm;
-        margin:0;
-        padding:0;
+        width:100% !important;
+        min-height:0 !important;
+        margin:0 !important;
+        padding:0 !important;
+        border:0 !important;
+        border-radius:0 !important;
+        box-shadow:none !important;
+        background:#fff !important;
+        position:relative;
+      }
+
+      .two-col{
+        display:block !important;
+      }
+
+      .sec-title{
+        break-after:avoid;
+      }
+
+      .page > *,
+      .page .two-col > div > *{
+        break-inside:avoid;
       }
     }
-  </style>
+    </style>
 </head>
 <body>
   <header>
@@ -312,6 +360,13 @@
   </template>
 
   <script>
+    // Keep browser-generated print headers/footers from showing the page title.
+    // Chrome's URL/date footer is controlled by the Print dialog's
+    // "Headers and footers" option and cannot be disabled by HTML/CSS.
+    const originalDocumentTitle = document.title;
+    window.addEventListener('beforeprint', () => { document.title = ''; });
+    window.addEventListener('afterprint', () => { document.title = originalDocumentTitle; });
+
     // ========= State & Helpers =========
     const $ = (q, el=document) => el.querySelector(q);
     const $$ = (q, el=document) => Array.from(el.querySelectorAll(q));
