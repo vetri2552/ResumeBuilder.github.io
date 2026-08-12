@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title></title>
+  <title>Resume Builder (Single File)</title>
   <style>
     :root{
       --bg:#0b1220; --panel:#111a2c; --ink:#e6eefc; --muted:#a9b7d3; --accent:#7aa2ff; --accent-2:#4ade80; --danger:#ff6b6b;
@@ -360,13 +360,6 @@
   </template>
 
   <script>
-    // Keep browser-generated print headers/footers from showing the page title.
-    // Chrome's URL/date footer is controlled by the Print dialog's
-    // "Headers and footers" option and cannot be disabled by HTML/CSS.
-    const originalDocumentTitle = document.title;
-    window.addEventListener('beforeprint', () => { document.title = ''; });
-    window.addEventListener('afterprint', () => { document.title = originalDocumentTitle; });
-
     // ========= State & Helpers =========
     const $ = (q, el=document) => el.querySelector(q);
     const $$ = (q, el=document) => Array.from(el.querySelectorAll(q));
